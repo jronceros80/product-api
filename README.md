@@ -4,39 +4,59 @@ REST API for product management with CRUD operations.
 
 ## 🚀 Quick Start
 
-Download the project ZIP file and extract it to your working directory:
+### Development/Local (Default - Supabase)
 
 ```bash
-# 1. Extract the ZIP file
-unzip challenge-jerc.zip
-cd challenge-jerc
+# 1. Clone/download the project
+cd product-api
 
-# 2. Compile the application
+# 2. Compile and run application (connects to Supabase by default)
 mvn clean compile
-
-# 3. Start database
-docker compose up -d
-
-# 4. Run application
 mvn spring-boot:run
+```
+
+⚠️ **Note**: The application connects to **Supabase cloud database** by default. No Docker required for development.
+
+## 🗄️ Database Setup
+
+### Supabase (Default - Already Configured)
+The application connects to **Supabase cloud database** automatically. No setup required for development.
+
+### Docker PostgreSQL (Only for Integration Tests)
+Docker Compose is **only needed for integration tests**, not for development:
+
+```bash
+# Only required when running integration tests
+docker compose up -d
+mvn integration-test
 ```
 
 ## 🧪 Tests
 
+### Unit Tests (No Docker required)
 ```bash
-# Unit tests
 mvn test
+```
 
-# Integration tests
+### Integration Tests (Requires Docker)
+```bash
+# 1. Start test database
+docker compose up -d
+
+# 2. Run integration tests
 mvn integration-test
 
-# Unit Test and Integration tests
+# 3. Run all tests
 mvn verify
 ```
 
-## 📝 Note
-To run integration tests, you need to start docker compose and launch the application first, 
-this way the database and products table will be created correctly
+## 📋 **Summary**
+
+| Component | Database | Docker Required |
+|-----------|----------|----------------|
+| **Development** | Supabase Cloud | ❌ No |
+| **Unit Tests** | In-memory | ❌ No |
+| **Integration Tests** | Local PostgreSQL | ✅ Yes |
 
 ## 🔍 Coverage: 91%
 The coverage report will be available at: `/target/coverage-reports/aggregate/index.html`
