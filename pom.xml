@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.products</groupId>
+  <artifactId>product-api</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>product-api</name>
+  <description>Product API for Spring Boot Challenge</description>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.0</version>
+    <relativePath/>
+  </parent>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <java.version>21</java.version>
+    
+    <!-- JaCoCo Properties -->
+    <jacoco.version>0.8.11</jacoco.version>
+    <jacoco.ut.execution.data.file>${project.build.directory}/coverage-reports/jacoco-ut.exec</jacoco.ut.execution.data.file>
+    <jacoco.it.execution.data.file>${project.build.directory}/coverage-reports/jacoco-it.exec</jacoco.it.execution.data.file>
+    <jacoco.ut.reportPath>${project.build.directory}/coverage-reports/jacoco-ut</jacoco.ut.reportPath>
+    <jacoco.it.reportPath>${project.build.directory}/coverage-reports/jacoco-it</jacoco.it.reportPath>
+    
+    <!-- Test execution control properties -->
+    <skip.unit.tests>false</skip.unit.tests>
+    <skip.integration.tests>false</skip.integration.tests>
+    
+
+    
+    <!-- Cucumber -->
+    <cucumber.version>7.15.0</cucumber.version>
+  </properties>
+
+  <dependencies>
+    <!-- Spring Boot JPA -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <!-- Spring Boot Web -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <!-- Spring Boot Thymeleaf -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+    <!-- Spring Boot Validation -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <!-- Spring Boot Test -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- PostgreSQL database -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+
+
+    <!-- OpenAPI using Springdoc -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.3.0</version>
+    </dependency>
+    <!-- Apache Commons Lang -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
+    
+    <!-- Spring HATEOAS -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-hateoas</artifactId>
+    </dependency>
+    
+    <!-- Spring Boot Actuator for monitoring -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <!-- JUnit 5 API and Engine -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Mockito for JUnit 5 -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
+    <!-- JUnit Platform Suite API -->
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-suite-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-suite-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    
+    <!-- Cucumber Dependencies -->
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-java</artifactId>
+      <version>${cucumber.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-junit-platform-engine</artifactId>
+      <version>${cucumber.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.cucumber</groupId>
+      <artifactId>cucumber-spring</artifactId>
+      <version>${cucumber.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+
+    
+    <!-- REST Assured for API Testing -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <version>5.4.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>spring-mock-mvc</artifactId>
+      <version>5.4.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Maven Compiler Plugin configuration -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+      </plugin>
+
+      <!-- Spring Boot Maven Plugin -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <!-- JaCoCo Maven Plugin -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <!-- Prepares the property pointing to the JaCoCo runtime agent which is passed as VM argument when Maven the Surefire plugin is executed. -->
+          <execution>
+            <id>pre-unit-test</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <!-- Sets the path to the file which contains the execution data. -->
+              <destFile>${jacoco.ut.execution.data.file}</destFile>
+              <!-- Sets the name of the property containing the settings for JaCoCo runtime agent. -->
+              <propertyName>surefireArgLine</propertyName>
+            </configuration>
+          </execution>
+          
+          <!-- Ensures that the code coverage report for unit tests is created after unit tests have been run. -->
+          <execution>
+            <id>post-unit-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <!-- Sets the path to the file which contains the execution data. -->
+              <dataFile>${jacoco.ut.execution.data.file}</dataFile>
+              <!-- Sets the output directory for the code coverage report. -->
+              <outputDirectory>${jacoco.ut.reportPath}</outputDirectory>
+            </configuration>
+          </execution>
+          
+          <!-- Prepares the property pointing to the JaCoCo runtime agent which is passed as VM argument when Maven the Failsafe plugin is executed. -->
+          <execution>
+            <id>pre-integration-test</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <!-- Sets the path to the file which contains the execution data. -->
+              <destFile>${jacoco.it.execution.data.file}</destFile>
+              <!-- Sets the name of the property containing the settings for JaCoCo runtime agent. -->
+              <propertyName>failsafeArgLine</propertyName>
+            </configuration>
+          </execution>
+          
+          <!-- Ensures that the code coverage report for integration tests is created after integration tests have been run. -->
+          <execution>
+            <id>post-integration-test</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <!-- Sets the path to the file which contains the execution data. -->
+              <dataFile>${jacoco.it.execution.data.file}</dataFile>
+              <!-- Sets the output directory for the code coverage report. -->
+              <outputDirectory>${jacoco.it.reportPath}</outputDirectory>
+            </configuration>
+          </execution>
+          
+          <!-- Creates a merged report from unit and integration test reports -->
+          <execution>
+            <id>merge-results</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>merge</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <directory>${project.build.directory}/coverage-reports</directory>
+                  <includes>
+                    <include>*.exec</include>
+                  </includes>
+                </fileSet>
+              </fileSets>
+              <destFile>${project.build.directory}/coverage-reports/aggregate.exec</destFile>
+            </configuration>
+          </execution>
+          
+          <!-- Creates a merged report -->
+          <execution>
+            <id>post-merge-report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/coverage-reports/aggregate.exec</dataFile>
+              <outputDirectory>${project.build.directory}/coverage-reports/aggregate</outputDirectory>
+            </configuration>
+          </execution>
+          
+          <!-- Check coverage thresholds -->
+          <execution>
+            <id>check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <dataFile>${project.build.directory}/coverage-reports/aggregate.exec</dataFile>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>INSTRUCTION</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.80</minimum> <!-- 80% minimum coverage -->
+                    </limit>
+                    <limit>
+                      <counter>BRANCH</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.65</minimum> <!-- 65% minimum branch coverage -->
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Maven Surefire Plugin (Unit Tests) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.1.2</version>
+        <configuration>
+          <!-- Sets the VM argument line used when unit tests are run. -->
+          <argLine>${surefireArgLine}</argLine>
+          <!-- Skips unit tests if the value of skip.unit.tests property is true -->
+          <skipTests>${skip.unit.tests}</skipTests>
+          <!-- Continue build even if tests fail (for coverage reports) -->
+          <testFailureIgnore>true</testFailureIgnore>
+          <!-- Excludes integration tests when unit tests are run. -->
+          <excludes>
+            <exclude>**/IT*.java</exclude>
+            <exclude>**/*IT.java</exclude>
+            <exclude>**/*IntegrationTest.java</exclude>
+            <exclude>**/RunCucumberIT.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+
+      <!-- Maven Failsafe Plugin (Integration Tests) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <!-- Ensures that both integration-test and verify goals of the Failsafe Maven plugin are executed. -->
+          <execution>
+            <id>integration-tests</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <!-- Sets the VM argument line used when integration tests are run. -->
+              <argLine>${failsafeArgLine}</argLine>
+              <!-- Skips integration tests if the value of skip.integration.tests property is true -->
+              <skipTests>${skip.integration.tests}</skipTests>
+              <!-- Include integration tests -->
+              <includes>
+                <include>**/IT*.java</include>
+                <include>**/*IT.java</include>
+                <include>**/*IntegrationTest.java</include>
+                <include>**/RunCucumberIT.java</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <!-- Reporting Section -->
+  <reporting>
+    <plugins>
+      <!-- JaCoCo Reporting Plugin -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <!-- select non-aggregate reports -->
+              <report>report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+
+      <!-- Maven Surefire Report Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>3.1.2</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <!-- Profiles for different environments -->
+  <profiles>
+    <!-- Coverage Profile -->
+    <profile>
+      <id>coverage</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>report</id>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- No Tests Profile -->
+    <profile>
+      <id>no-tests</id>
+      <properties>
+        <maven.test.skip>true</maven.test.skip>
+      </properties>
+    </profile>
+
+    <!-- Unit Tests Only Profile -->
+    <profile>
+      <id>unit-tests</id>
+      <properties>
+        <skip.integration.tests>true</skip.integration.tests>
+      </properties>
+    </profile>
+
+    <!-- Integration Tests Only Profile -->
+    <profile>
+      <id>integration-tests</id>
+      <properties>
+        <skip.unit.tests>true</skip.unit.tests>
+      </properties>
+    </profile>
+  </profiles>
+</project>

@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: products_db
+    environment:
+      POSTGRES_DB: products_db
+      POSTGRES_USER: products_user
+      POSTGRES_PASSWORD: products_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/data.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U products_user -d products_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+volumes:
+  postgres_data: 
