@@ -51,8 +51,8 @@ The coverage report will be available at: `/target/coverage-reports/aggregate/in
 - **Documentation**: http://localhost:8080/swagger-ui.html
 ![swagger.png](images/swagger.png)
 
-- **Web Interface**: http://localhost:8080/web/products
-![web.png](images/web.png)
+
+
 
 ## 🛠️ Technologies
 
@@ -63,7 +63,7 @@ The coverage report will be available at: `/target/coverage-reports/aggregate/in
 - PostgreSQL + Docker
 - Maven + JUnit 5 + Mockito + jaCoCo
 - Cucumber + gherkin
-- Thymeleaf
+
 
 ## 📋 Endpoints
 
