@@ -1,7 +1,7 @@
 # Dockerfile multi-stage para aplicación Spring Boot
 
 # Etapa 1: Compilación
-FROM maven:3.9.6-amazoncorretto-21-alpine AS build
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 
 # Copiar archivos de configuración de Maven
@@ -12,7 +12,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Etapa 2: Ejecución
-FROM amazoncorretto:21-alpine-jdk
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Crear usuario no-root para mayor seguridad
