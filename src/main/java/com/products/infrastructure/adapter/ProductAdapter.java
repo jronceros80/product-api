@@ -4,7 +4,6 @@ import com.products.domain.exception.ProductNotFoundException;
 import com.products.domain.model.PaginatedResult;
 import com.products.domain.model.PaginationQuery;
 import com.products.domain.model.Product;
-import com.products.domain.model.ProductCategory;
 import com.products.domain.model.ProductFilter;
 import com.products.domain.port.ProductPersistencePort;
 import com.products.infrastructure.postgresql.entity.ProductEntity;
@@ -14,11 +13,10 @@ import com.products.infrastructure.mapper.ProductMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,27 +62,42 @@ public class ProductAdapter implements ProductPersistencePort {
     public PaginatedResult<Product> findActiveProducts(final PaginationQuery paginationQuery,
             final ProductFilter filter) {
 
-        final Pageable pageable = productMapper.toPageable(paginationQuery);
+        final Long cursor = parseCursor(paginationQuery.cursor());
+        final int limit = paginationQuery.limit();
+        final String categoryStr = filter.getCategoryForQuery();
+        final String name = filter.getNameForQuery();
+        final Boolean active = filter.active();
 
-        ProductCategory category = null;
-        if (filter.getCategoryForQuery() != null) {
-            category = ProductCategory.valueOf(filter.getCategoryForQuery().toUpperCase());
+        final List<ProductEntity> entities = productJpaRepository.findProductsAfterCursor(
+                cursor, active, categoryStr, name, limit + 1);
+
+        final boolean hasNext = entities.size() > limit;
+        final List<ProductEntity> actualEntities = hasNext ? entities.subList(0, limit) : entities;
+
+        final List<Product> products = actualEntities.stream()
+                .map(productMapper::toDomain)
+                .toList();
+
+        String nextCursor = null;
+        String previousCursor = null;
+        boolean hasPrevious = cursor != null;
+
+        if (!products.isEmpty()) {
+            nextCursor = String.valueOf(products.getLast().id());
         }
 
-        final Page<ProductEntity> entityPage = productJpaRepository.findProductsWithFilters(
-                filter.active(),
-                category,
-                filter.getNameForQuery(),
-                pageable);
-
-        final Page<Product> productPage = entityPage.map(productMapper::toDomain);
+        if (hasPrevious && !products.isEmpty()) {
+            previousCursor = String.valueOf(products.getFirst().id());
+        }
 
         return new PaginatedResult<>(
-                productPage.getContent(),
-                productPage.getTotalElements(),
-                productPage.getTotalPages(),
-                productPage.getNumber(),
-                productPage.getSize());
+                products,
+                nextCursor,
+                previousCursor,
+                hasNext,
+                hasPrevious,
+                products.size(),
+                limit);
     }
 
     @Override
@@ -103,5 +116,17 @@ public class ProductAdapter implements ProductPersistencePort {
         entity.setActive(false);
         productJpaRepository.save(entity);
         deactivatedInSession.add(id);
+    }
+
+    private Long parseCursor(String cursor) {
+        if (cursor == null || cursor.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(cursor.trim());
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid cursor format: {}", cursor);
+            return null;
+        }
     }
 }

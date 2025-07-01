@@ -1,24 +1,27 @@
 package com.products.infrastructure.dto;
 
-import org.springframework.hateoas.RepresentationModel;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.List;
 
-public class ProductPageResponseDTO extends RepresentationModel<ProductPageResponseDTO> {
-    private final List<ProductResponseDTO> products;
-    private final PageInfo page;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "Paginated response for products using cursor-based pagination")
+public record ProductPageResponseDTO(
 
-    public ProductPageResponseDTO(List<ProductResponseDTO> products, PageInfo page) {
-        this.products = products;
-        this.page = page;
-    }
+        @Schema(description = "List of products") List<ProductResponseDTO> content,
 
-    public List<ProductResponseDTO> getProducts() {
-        return products;
-    }
+        @Schema(description = "Cursor for the next page (null if no next page)") String nextCursor,
 
-    public PageInfo getPage() {
-        return page;
-    }
+        @Schema(description = "Cursor for the previous page (null if no previous page)") String previousCursor,
 
+        @Schema(description = "Whether there are more items after this page") boolean hasNext,
 
+        @Schema(description = "Whether there are items before this page") boolean hasPrevious,
+
+        @Schema(description = "Number of items in this page") int size,
+
+        @Schema(description = "Maximum number of items per page") int limit,
+
+        @Schema(description = "Pagination metadata") PageInfo pageInfo) {
 }

@@ -2,39 +2,40 @@ package com.products.infrastructure.rest.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.products.application.ProductUseCase;
-import com.products.domain.model.PaginatedResult;
-import com.products.domain.model.PaginationQuery;
 import com.products.domain.model.Product;
 import com.products.domain.model.ProductCategory;
 import com.products.domain.model.ProductFilter;
+import com.products.domain.model.PaginatedResult;
+import com.products.domain.model.PaginationQuery;
+import com.products.infrastructure.dto.PageInfo;
+import com.products.infrastructure.dto.ProductPageResponseDTO;
 import com.products.infrastructure.dto.ProductRequestDTO;
 import com.products.infrastructure.dto.ProductResponseDTO;
 import com.products.infrastructure.mapper.ProductMapper;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.hasSize;
+import org.junit.jupiter.api.DisplayName;
 
 @ExtendWith(MockitoExtension.class)
 class ProductControllerTest {
@@ -45,9 +46,6 @@ class ProductControllerTest {
         @Mock
         private ProductMapper productMapper;
 
-        @Mock
-        private PagedResourcesAssembler<ProductResponseDTO> pagedResourcesAssembler;
-
         @InjectMocks
         private ProductController productController;
 
@@ -57,7 +55,6 @@ class ProductControllerTest {
         @BeforeEach
         void setUp() {
                 mockMvc = MockMvcBuilders.standaloneSetup(productController)
-                                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                                 .build();
                 objectMapper = new ObjectMapper();
         }
@@ -102,26 +99,54 @@ class ProductControllerTest {
         }
 
         @Test
-        void getAllActiveProducts_ShouldReturnOk_WhenValidRequest() throws Exception {
-                Product product = new Product(
-                                1L, "Test Product", BigDecimal.valueOf(99.99), ProductCategory.ELECTRONICS, true);
-                ProductResponseDTO responseDTO = new ProductResponseDTO(
-                                1L, "Test Product", BigDecimal.valueOf(99.99), ProductCategory.ELECTRONICS, true);
+        @DisplayName("Should return products with cursor pagination")
+        void getAllActiveProducts_ShouldReturnProductsWithCursorPagination() throws Exception {
+                List<Product> products = Arrays.asList(
+                                new Product(1L, "Laptop", BigDecimal.valueOf(1000), ProductCategory.ELECTRONICS, true),
+                                new Product(2L, "Mouse", BigDecimal.valueOf(25), ProductCategory.ELECTRONICS, true));
 
-                PaginatedResult<Product> paginatedResult = new PaginatedResult<>(List.of(product), 1L, 1, 0, 10);
-                PaginationQuery mockPaginationQuery = new PaginationQuery(0, 10, "id", "asc");
-                PagedModel<EntityModel<ProductResponseDTO>> mockPagedModel = PagedModel.empty();
+                PaginatedResult<Product> paginatedResult = new PaginatedResult<>(
+                                products, "2", null, false, false, 2, 20);
 
-                when(productMapper.toPaginationQuery(any())).thenReturn(mockPaginationQuery);
-                when(productUseCase.getAllActiveProducts(any(PaginationQuery.class), any(ProductFilter.class)))
+                PaginationQuery expectedPaginationQuery = new PaginationQuery(null, 20, "id", "asc");
+                ProductFilter expectedFilter = new ProductFilter("ELECTRONICS", "laptop", true);
+
+                when(productMapper.toPaginationQuery(null, 20, "id", "asc")).thenReturn(expectedPaginationQuery);
+                when(productUseCase.getAllActiveProducts(expectedPaginationQuery, expectedFilter))
                                 .thenReturn(paginatedResult);
-                when(productMapper.toPagedModel(any(), any(), any())).thenReturn(mockPagedModel);
+                when(productMapper.toPageResponseDTO(paginatedResult)).thenReturn(
+                                new ProductPageResponseDTO(
+                                                Arrays.asList(
+                                                                new ProductResponseDTO(1L, "Laptop",
+                                                                                BigDecimal.valueOf(1000),
+                                                                                ProductCategory.ELECTRONICS, true),
+                                                                new ProductResponseDTO(2L, "Mouse",
+                                                                                BigDecimal.valueOf(25),
+                                                                                ProductCategory.ELECTRONICS, true)),
+                                                "2", null, false, false, 2, 20,
+                                                new PageInfo(2, 20, false, false, "2", null)));
 
                 mockMvc.perform(get("/api/v1/products")
-                                .param("page", "0")
-                                .param("size", "10")
-                                .param("category", "ELECTRONICS"))
-                                .andExpect(status().isOk());
+                                .param("limit", "20")
+                                .param("sortBy", "id")
+                                .param("sortDir", "asc")
+                                .param("category", "ELECTRONICS")
+                                .param("name", "laptop")
+                                .param("active", "true")
+                                .contentType(MediaType.APPLICATION_JSON))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content", hasSize(2)))
+                                .andExpect(jsonPath("$.content[0].name").value("Laptop"))
+                                .andExpect(jsonPath("$.content[1].name").value("Mouse"))
+                                .andExpect(jsonPath("$.size").value(2))
+                                .andExpect(jsonPath("$.limit").value(20))
+                                .andExpect(jsonPath("$.hasNext").value(false))
+                                .andExpect(jsonPath("$.hasPrevious").value(false))
+                                .andExpect(jsonPath("$.nextCursor").value("2"));
+
+                verify(productUseCase).getAllActiveProducts(expectedPaginationQuery, expectedFilter);
+                verify(productMapper).toPaginationQuery(null, 20, "id", "asc");
+                verify(productMapper).toPageResponseDTO(paginatedResult);
         }
 
         @Test

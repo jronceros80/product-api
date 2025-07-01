@@ -168,7 +168,7 @@ class GlobalExceptionHandlerTest {
         ErrorResponse body = response.getBody();
         assertThat(body).isNotNull();
         assertThat(body.message()).isEqualTo("Invalid request body");
-        assertThat(body.errors()).isNull(); // En este caso específico, errors puede ser null cuando no hay causa específica
+        assertThat(body.errors()).isNull();
     }
 
     @Test

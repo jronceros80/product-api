@@ -1,13 +1,10 @@
 package com.products.domain.model;
 
-public record PaginationQuery(int pageNumber, int pageSize, String sortBy, String sortDir) {
+public record PaginationQuery(String cursor, int limit, String sortBy, String sortDir) {
 
     public PaginationQuery {
-        if (pageNumber < 0) {
-            throw new IllegalArgumentException("Page number cannot be negative.");
-        }
-        if (pageSize < 1) {
-            throw new IllegalArgumentException("Page size must be at least 1.");
+        if (limit < 1 || limit > 100) {
+            throw new IllegalArgumentException("Limit must be between 1 and 100.");
         }
         if (sortBy == null || sortBy.isBlank()) {
             sortBy = "id";
@@ -17,7 +14,11 @@ public record PaginationQuery(int pageNumber, int pageSize, String sortBy, Strin
         }
     }
 
-    public PaginationQuery(int pageNumber, int pageSize) {
-        this(pageNumber, pageSize, "id", "asc");
+    public PaginationQuery(String cursor, int limit) {
+        this(cursor, limit, "id", "asc");
+    }
+
+    public PaginationQuery(int limit) {
+        this(null, limit, "id", "asc");
     }
 }

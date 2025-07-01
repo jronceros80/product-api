@@ -1,49 +1,55 @@
 package com.products.infrastructure.dto;
 
 import org.junit.jupiter.api.Test;
-import java.util.ArrayList;
+
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ProductPageResponseDTOTest {
 
     @Test
-    void testPageInfo() {
-        PageInfo pageInfo = new PageInfo(10, 0, 100, 10);
+    void shouldCreatePageInfoWithCursorPagination() {
+        PageInfo pageInfo = new PageInfo(10, 20, true, false, "nextCursor123", null);
 
-        assertEquals(10, pageInfo.getSize());
-        assertEquals(100, pageInfo.getTotalElements());
-        assertEquals(10, pageInfo.getTotalPages());
-        assertEquals(0, pageInfo.getNumber());
-        assertTrue(pageInfo.isFirst());
-        assertFalse(pageInfo.isLast());
-        assertTrue(pageInfo.isHasNext());
-        assertFalse(pageInfo.isHasPrevious());
+        assertThat(pageInfo.size()).isEqualTo(10);
+        assertThat(pageInfo.limit()).isEqualTo(20);
+        assertThat(pageInfo.hasNext()).isTrue();
+        assertThat(pageInfo.hasPrevious()).isFalse();
+        assertThat(pageInfo.nextCursor()).isEqualTo("nextCursor123");
+        assertThat(pageInfo.previousCursor()).isNull();
     }
 
     @Test
-    void testPageInfo_LastPage() {
-        PageInfo pageInfo = new PageInfo(20, 9, 200, 10);
+    void shouldCreatePageInfoWithoutCursors() {
+        PageInfo pageInfo = new PageInfo(5, 10, false, true, null, "prevCursor456");
 
-        assertEquals(20, pageInfo.getSize());
-        assertEquals(200, pageInfo.getTotalElements());
-        assertEquals(10, pageInfo.getTotalPages());
-        assertEquals(9, pageInfo.getNumber());
-        assertFalse(pageInfo.isFirst());
-        assertTrue(pageInfo.isLast());
-        assertFalse(pageInfo.isHasNext());
-        assertTrue(pageInfo.isHasPrevious());
+        assertThat(pageInfo.size()).isEqualTo(5);
+        assertThat(pageInfo.limit()).isEqualTo(10);
+        assertThat(pageInfo.hasNext()).isFalse();
+        assertThat(pageInfo.hasPrevious()).isTrue();
+        assertThat(pageInfo.nextCursor()).isNull();
+        assertThat(pageInfo.previousCursor()).isEqualTo("prevCursor456");
     }
 
     @Test
-    void testPageResponseDTO() {
-        PageInfo pageInfo = new PageInfo(10, 0, 100, 10);
-        List<ProductResponseDTO> products = new ArrayList<>();
-        ProductPageResponseDTO responseDTO = new ProductPageResponseDTO(products, pageInfo);
+    void shouldCreateProductPageResponseDTO() {
+        PageInfo pageInfo = new PageInfo(1, 20, false, false, null, null);
+        List<ProductResponseDTO> products = Collections.singletonList(
+                new ProductResponseDTO(1L, "Test Product", BigDecimal.valueOf(100),
+                        com.products.domain.model.ProductCategory.ELECTRONICS, true));
 
-        assertNotNull(responseDTO.getProducts());
-        assertNotNull(responseDTO.getPage());
-        assertEquals(pageInfo, responseDTO.getPage());
-        assertEquals(products, responseDTO.getProducts());
+        ProductPageResponseDTO responseDTO = new ProductPageResponseDTO(
+                products, null, null, false, false, 1, 20, pageInfo);
+
+        assertThat(responseDTO.content()).hasSize(1);
+        assertThat(responseDTO.pageInfo()).isEqualTo(pageInfo);
+        assertThat(responseDTO.content().getFirst().name()).isEqualTo("Test Product");
+        assertThat(responseDTO.hasNext()).isFalse();
+        assertThat(responseDTO.hasPrevious()).isFalse();
+        assertThat(responseDTO.size()).isEqualTo(1);
+        assertThat(responseDTO.limit()).isEqualTo(20);
     }
 }

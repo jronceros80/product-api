@@ -7,9 +7,6 @@ import com.products.infrastructure.dto.ProductResponseDTO;
 import com.products.infrastructure.postgresql.entity.ProductEntity;
 
 import com.products.domain.model.PaginationQuery;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -164,39 +161,66 @@ class ProductMapperTest {
     }
 
     @Test
-    void toPaginationQuery_ShouldUseDefaults_WhenNoSortingProvided() {
-        Pageable pageable = PageRequest.of(0, 10);
+    void toPaginationQuery_ValidCursorParams_ReturnsPaginationQuery() {
+        String cursor = "123";
+        Integer limit = 20;
+        String sortBy = "name";
+        String sortDir = "desc";
 
-        PaginationQuery result = mapper.toPaginationQuery(pageable);
+        PaginationQuery result = mapper.toPaginationQuery(cursor, limit, sortBy, sortDir);
 
-        assertThat(result.pageNumber()).isEqualTo(0);
-        assertThat(result.pageSize()).isEqualTo(10);
-        assertThat(result.sortBy()).isEqualTo("id");
-        assertThat(result.sortDir()).isEqualTo("asc");
-    }
-
-    @Test
-    void toPaginationQuery_ShouldExtractSorting_WhenSortingProvided() {
-        Sort sort = Sort.by(Sort.Direction.DESC, "name");
-        Pageable pageable = PageRequest.of(1, 20, sort);
-
-        PaginationQuery result = mapper.toPaginationQuery(pageable);
-
-        assertThat(result.pageNumber()).isEqualTo(1);
-        assertThat(result.pageSize()).isEqualTo(20);
+        assertThat(result.cursor()).isEqualTo("123");
+        assertThat(result.limit()).isEqualTo(20);
         assertThat(result.sortBy()).isEqualTo("name");
         assertThat(result.sortDir()).isEqualTo("desc");
     }
 
     @Test
-    void toPaginationQuery_ShouldHandleAscendingSort() {
-        Sort sort = Sort.by(Sort.Direction.ASC, "price");
-        Pageable pageable = PageRequest.of(2, 5, sort);
+    void toPaginationQuery_NullParams_ReturnsDefaultPaginationQuery() {
+        PaginationQuery result = mapper.toPaginationQuery(null, null, null, null);
 
-        PaginationQuery result = mapper.toPaginationQuery(pageable);
+        assertThat(result.cursor()).isNull();
+        assertThat(result.limit()).isEqualTo(20);
+        assertThat(result.sortBy()).isEqualTo("id");
+        assertThat(result.sortDir()).isEqualTo("asc");
+    }
 
-        assertThat(result.pageNumber()).isEqualTo(2);
-        assertThat(result.pageSize()).isEqualTo(5);
+    @Test
+    void toPaginationQuery_InvalidLimit_UsesDefaultLimit() {
+        PaginationQuery result1 = mapper.toPaginationQuery(null, 200, "id", "asc");
+
+        PaginationQuery result2 = mapper.toPaginationQuery(null, 0, "id", "asc");
+
+        assertThat(result1.limit()).isEqualTo(20);
+        assertThat(result2.limit()).isEqualTo(20);
+    }
+
+    @Test
+    void toPaginationQuery_BlankSortParams_ReturnsDefaultSortParams() {
+        PaginationQuery result = mapper.toPaginationQuery("123", 15, "   ", "   ");
+
+        assertThat(result.cursor()).isEqualTo("123");
+        assertThat(result.limit()).isEqualTo(15);
+        assertThat(result.sortBy()).isEqualTo("id");
+        assertThat(result.sortDir()).isEqualTo("asc");
+    }
+
+    @Test
+    void toPaginationQuery_EmptySortParams_ReturnsDefaultSortParams() {
+        PaginationQuery result = mapper.toPaginationQuery("456", 25, "", "");
+
+        assertThat(result.cursor()).isEqualTo("456");
+        assertThat(result.limit()).isEqualTo(25);
+        assertThat(result.sortBy()).isEqualTo("id");
+        assertThat(result.sortDir()).isEqualTo("asc");
+    }
+
+    @Test
+    void toPaginationQuery_MixedParams_ReturnsCorrectPaginationQuery() {
+        PaginationQuery result = mapper.toPaginationQuery("789", null, "price", null);
+
+        assertThat(result.cursor()).isEqualTo("789");
+        assertThat(result.limit()).isEqualTo(20);
         assertThat(result.sortBy()).isEqualTo("price");
         assertThat(result.sortDir()).isEqualTo("asc");
     }

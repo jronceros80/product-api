@@ -1,56 +1,20 @@
 package com.products.infrastructure.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "Pagination information for cursor-based navigation")
 public record PageInfo(
-        int size,
-        int number,
-        long totalElements,
-        int totalPages) {
-    
-    public boolean first() {
-        return number == 0;
-    }
+        @Schema(description = "Number of items in current page") int size,
 
-    public boolean last() {
-        return number == totalPages - 1;
-    }
+        @Schema(description = "Maximum items per page") int limit,
 
-    public boolean hasNext() {
-        return number < totalPages - 1;
-    }
+        @Schema(description = "Whether there is a next page") boolean hasNext,
 
-    public boolean hasPrevious() {
-        return number > 0;
-    }
-    
-    public boolean isFirst() {
-        return first();
-    }
+        @Schema(description = "Whether there is a previous page") boolean hasPrevious,
 
-    public boolean isLast() {
-        return last();
-    }
+        @Schema(description = "Cursor for next page navigation") String nextCursor,
 
-    public boolean isHasNext() {
-        return hasNext();
-    }
-
-    public boolean isHasPrevious() {
-        return hasPrevious();
-    }
-
-    public int getSize() {
-        return size();
-    }
-
-    public int getNumber() {
-        return number();
-    }
-
-    public long getTotalElements() {
-        return totalElements();
-    }
-
-    public int getTotalPages() {
-        return totalPages();
-    }
-} 
+        @Schema(description = "Cursor for previous page navigation") String previousCursor) {
+}

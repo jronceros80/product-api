@@ -5,15 +5,12 @@ import com.products.domain.model.Product;
 import com.products.domain.model.ProductFilter;
 import com.products.domain.model.PaginatedResult;
 import com.products.domain.model.PaginationQuery;
+import com.products.infrastructure.dto.ProductPageResponseDTO;
 import com.products.infrastructure.dto.ProductRequestDTO;
 import com.products.infrastructure.dto.ProductResponseDTO;
 import com.products.infrastructure.mapper.ProductMapper;
 import com.products.infrastructure.rest.openapi.ProductApi;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -27,14 +24,11 @@ public class ProductController implements ProductApi {
 
     private final ProductUseCase productUseCase;
     private final ProductMapper productMapper;
-    private final PagedResourcesAssembler<ProductResponseDTO> pagedResourcesAssembler;
 
     public ProductController(final ProductUseCase productUseCase,
-                             final ProductMapper productMapper,
-                             final PagedResourcesAssembler<ProductResponseDTO> pagedResourcesAssembler) {
+            final ProductMapper productMapper) {
         this.productUseCase = productUseCase;
         this.productMapper = productMapper;
-        this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
 
     @Override
@@ -42,30 +36,29 @@ public class ProductController implements ProductApi {
         final Product productRequest = productMapper.toDomain(productRequestDTO);
         final Product createdProduct = productUseCase.createProduct(productRequest);
         final ProductResponseDTO response = productMapper.toResponseDTO(createdProduct);
-        
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Override
-    public ResponseEntity<PagedModel<EntityModel<ProductResponseDTO>>> getAllActiveProducts(
-            final Pageable pageable, final String category, final String name, final Boolean active) {
+    public ResponseEntity<ProductPageResponseDTO> getAllActiveProducts(
+            final String cursor, final Integer limit, final String sortBy, final String sortDir,
+            final String category, final String name, final Boolean active) {
 
+        final PaginationQuery paginationQuery = productMapper.toPaginationQuery(cursor, limit, sortBy, sortDir);
         final ProductFilter filter = new ProductFilter(category, name, active);
-        final PaginationQuery paginationQuery = productMapper.toPaginationQuery(pageable);
 
         final PaginatedResult<Product> productResult = productUseCase.getAllActiveProducts(paginationQuery, filter);
+        final ProductPageResponseDTO response = productMapper.toPageResponseDTO(productResult);
 
-        final PagedModel<EntityModel<ProductResponseDTO>> pagedModel = productMapper.toPagedModel(
-                productResult, pageable, pagedResourcesAssembler);
-
-        return ResponseEntity.ok(pagedModel);
+        return ResponseEntity.ok(response);
     }
 
     @Override
     public ResponseEntity<ProductResponseDTO> getProductById(final Long id) {
         final Product product = productUseCase.getActiveProductById(id);
         final ProductResponseDTO response = productMapper.toResponseDTO(product);
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -75,7 +68,7 @@ public class ProductController implements ProductApi {
         final Product productRequest = productMapper.toDomain(productRequestDTO);
         final Product updatedProduct = productUseCase.updateProduct(id, productRequest);
         final ProductResponseDTO response = productMapper.toResponseDTO(updatedProduct);
-        
+
         return ResponseEntity.ok(response);
     }
 

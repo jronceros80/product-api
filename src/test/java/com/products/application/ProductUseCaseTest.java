@@ -10,15 +10,17 @@ import com.products.domain.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.DisplayName;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,8 +34,6 @@ class ProductUseCaseTest {
     private ProductUseCase productUseCase;
 
     private Product sampleProduct;
-    private ProductFilter defaultFilter;
-    private PaginationQuery defaultPaginationQuery;
 
     @BeforeEach
     void setUp() {
@@ -43,9 +43,6 @@ class ProductUseCaseTest {
                 BigDecimal.valueOf(99.99),
                 ProductCategory.ELECTRONICS,
                 true);
-
-        defaultFilter = new ProductFilter(null, null, null);
-        defaultPaginationQuery = new PaginationQuery(0, 10);
     }
 
     @Test
@@ -64,35 +61,50 @@ class ProductUseCaseTest {
     }
 
     @Test
-    void getAllActiveProducts_ShouldReturnProductPage_WhenValidRequest() {
-        PaginatedResult<Product> domainResult = new PaginatedResult<>(
-                Collections.singletonList(sampleProduct), 1L, 1, 0, 10);
+    @DisplayName("Should return paginated active products when valid pagination query and filter are provided")
+    void getAllActiveProducts_ValidPaginationAndFilter_ReturnsPaginatedProducts() {
+        PaginationQuery paginationQuery = new PaginationQuery(null, 10, "id", "asc");
+        ProductFilter filter = new ProductFilter("ELECTRONICS", "laptop", true);
 
-        when(productService.getAllActiveProducts(eq(defaultPaginationQuery), eq(defaultFilter)))
-                .thenReturn(domainResult);
+        List<Product> products = Arrays.asList(
+                new Product(1L, "Laptop", BigDecimal.valueOf(1000), ProductCategory.ELECTRONICS, true),
+                new Product(2L, "Mouse", BigDecimal.valueOf(25), ProductCategory.ELECTRONICS, true));
 
-        PaginatedResult<Product> result = productUseCase.getAllActiveProducts(defaultPaginationQuery, defaultFilter);
+        PaginatedResult<Product> expectedResult = new PaginatedResult<>(
+                products, "2", null, false, false, 2, 10);
 
-        assertThat(result.content()).hasSize(1);
-        assertThat(result.content().getFirst()).isEqualTo(sampleProduct);
-        assertThat(result.totalElements()).isEqualTo(1L);
-        verify(productService).getAllActiveProducts(eq(defaultPaginationQuery), eq(defaultFilter));
+        when(productService.getAllActiveProducts(paginationQuery, filter))
+                .thenReturn(expectedResult);
+
+        PaginatedResult<Product> result = productUseCase.getAllActiveProducts(paginationQuery, filter);
+
+        assertThat(result.content()).hasSize(2);
+        assertThat(result.size()).isEqualTo(2);
+        assertThat(result.limit()).isEqualTo(10);
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.hasPrevious()).isFalse();
+        verify(productService).getAllActiveProducts(paginationQuery, filter);
     }
 
     @Test
-    void getAllActiveProducts_ShouldReturnFilteredProducts_WhenCategoryProvided() {
-        ProductFilter customFilter = new ProductFilter("ELECTRONICS", null, null);
-        PaginatedResult<Product> domainResult = new PaginatedResult<>(
-                Collections.singletonList(sampleProduct), 1L, 1, 0, 10);
+    @DisplayName("Should return empty list when no products match the criteria")
+    void getAllActiveProducts_NoMatchingProducts_ReturnsEmptyList() {
+        PaginationQuery paginationQuery = new PaginationQuery(null, 10, "id", "asc");
+        ProductFilter filter = new ProductFilter("CLOTHING", "jacket", true);
 
-        when(productService.getAllActiveProducts(eq(defaultPaginationQuery), eq(customFilter)))
-                .thenReturn(domainResult);
+        PaginatedResult<Product> expectedResult = new PaginatedResult<>(
+                Collections.emptyList(), null, null, false, false, 0, 10);
 
-        PaginatedResult<Product> result = productUseCase.getAllActiveProducts(defaultPaginationQuery, customFilter);
+        when(productService.getAllActiveProducts(paginationQuery, filter))
+                .thenReturn(expectedResult);
 
-        assertThat(result.content()).hasSize(1);
-        assertThat(result.content().getFirst()).isEqualTo(sampleProduct);
-        verify(productService).getAllActiveProducts(eq(defaultPaginationQuery), eq(customFilter));
+        PaginatedResult<Product> result = productUseCase.getAllActiveProducts(paginationQuery, filter);
+
+        assertThat(result.content()).isEmpty();
+        assertThat(result.size()).isEqualTo(0);
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.hasPrevious()).isFalse();
+        verify(productService).getAllActiveProducts(paginationQuery, filter);
     }
 
     @Test

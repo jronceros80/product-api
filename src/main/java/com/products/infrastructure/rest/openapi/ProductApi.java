@@ -6,13 +6,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.products.infrastructure.dto.ProductPageResponseDTO;
 import com.products.infrastructure.dto.ProductRequestDTO;
 import com.products.infrastructure.dto.ProductResponseDTO;
 
@@ -30,15 +27,22 @@ public interface ProductApi {
                         @Valid @RequestBody ProductRequestDTO request);
 
         @GetMapping("/products")
-        @Operation(summary = "Get all active products", description = "Retrieves all active products with pagination using Spring Pageable and HATEOAS")
+        @Operation(summary = "Get all active products", description = "Retrieves all active products with cursor-based pagination for better performance and consistency")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "Products retrieved successfully"),
                         @ApiResponse(responseCode = "400", description = "Invalid pagination parameters"),
                         @ApiResponse(responseCode = "500", description = "Internal server error")
         })
-        ResponseEntity<PagedModel<EntityModel<ProductResponseDTO>>> getAllActiveProducts(
-                        @Parameter(description = "Pagination parameters (page, size, sort). " +
-                                        "Examples: ?page=0&size=10&sort=name,asc or ?sort=category,desc") @PageableDefault(size = 10, sort = "id") Pageable pageable,
+        ResponseEntity<ProductPageResponseDTO> getAllActiveProducts(
+                        @Parameter(description = "Cursor for pagination. Use the nextCursor from previous response to get next page. "
+                                        +
+                                        "Leave empty for first page.") @RequestParam(value = "cursor", required = false) String cursor,
+
+                        @Parameter(description = "Number of items per page (1-100, default: 20)") @RequestParam(value = "limit", required = false, defaultValue = "20") Integer limit,
+
+                        @Parameter(description = "Sort field (default: id)") @RequestParam(value = "sortBy", required = false, defaultValue = "id") String sortBy,
+
+                        @Parameter(description = "Sort direction: asc or desc (default: asc)") @RequestParam(value = "sortDir", required = false, defaultValue = "asc") String sortDir,
 
                         @Parameter(description = "Filter by category (optional)") @RequestParam(value = "category", required = false) String category,
 
