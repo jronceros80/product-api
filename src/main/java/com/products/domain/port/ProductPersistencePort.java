@@ -18,4 +18,5 @@ public interface ProductPersistencePort {
     PaginatedResult<Product> findActiveProducts(PaginationQuery paginationQuery, ProductFilter filter);
 
     void deactivateProduct(Long id);
+
 }

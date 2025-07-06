@@ -1,26 +1,83 @@
-# Product API
+# Products API - Spring Boot Application
 
-REST API for product management with CRUD operations.
+This is a Spring Boot application for managing products with a REST API and web interface.
 
-## 🚀 Quick Start
-
-### Development/Local (Default - Supabase)
+### Development/Local (PostgreSQL Docker)
 
 ```bash
-# 1. Clone/download the project
-cd product-api
+# 1. Start PostgreSQL database
+docker-compose up -d postgres
 
-# 2. Compile and run application (connects to Supabase by default)
-mvn clean compile
+# 2. Compile and run application (connects to local PostgreSQL)
 mvn spring-boot:run
+
+# 3. Access the application:
+# - REST API: http://localhost:8080/api/products
+# - Web Interface: http://localhost:8080/products
 ```
 
-⚠️ **Note**: The application connects to **Supabase cloud database** by default. No Docker required for development.
+⚠️ **Note**: The application connects to **local PostgreSQL database** via Docker. Docker is required for development.
+
+## Database Configuration
+
+### PostgreSQL Local (Default - Docker)
+The application connects to **local PostgreSQL database** automatically using Docker Compose.
+
+**Database Details:**
+- **Database**: products_db
+- **User**: products_user
+- **Password**: products_pass
+- **Port**: 5432 (localhost)
+
+### Test Configuration
+Tests use the same PostgreSQL configuration but with `create-drop` mode for clean test runs.
+
+## API Endpoints
+
+### REST API (JSON)
+- `GET /api/products` - Get all products with pagination
+- `GET /api/products/{id}` - Get product by ID
+- `POST /api/products` - Create new product
+- `PUT /api/products/{id}` - Update product
+- `DELETE /api/products/{id}` - Delete product
+
+### Web Interface (HTML)
+- `GET /products` - View all products
+- `GET /products/new` - Create new product form
+- `GET /products/{id}` - View product details
+- `GET /products/{id}/edit` - Edit product form
+
+## Testing
+
+```bash
+# Run all tests
+mvn test
+
+# Run integration tests
+mvn integration-test
+
+# Run tests with coverage
+mvn jacoco:prepare-agent test jacoco:report
+```
+
+## Build and Package
+
+```bash
+# Build JAR
+mvn clean package
+
+# Build and run
+mvn clean package && java -jar target/product-api-*.jar
+```
+
+## Environment Summary
+
+| **Environment** | **Database** | **Docker Required** |
+|-----------------|--------------|---------------------|
+| **Development** | PostgreSQL Local | ✅ Yes |
+| **Testing** | PostgreSQL Local | ✅ Yes |
 
 ## 🗄️ Database Setup
-
-### Supabase (Default - Already Configured)
-The application connects to **Supabase cloud database** automatically. No setup required for development.
 
 ### Docker PostgreSQL (Only for Integration Tests)
 Docker Compose is **only needed for integration tests**, not for development:
@@ -49,14 +106,6 @@ mvn integration-test
 # 3. Run all tests
 mvn verify
 ```
-
-## 📋 **Summary**
-
-| Component | Database | Docker Required |
-|-----------|----------|----------------|
-| **Development** | Supabase Cloud | ❌ No |
-| **Unit Tests** | In-memory | ❌ No |
-| **Integration Tests** | Local PostgreSQL | ✅ Yes |
 
 ## 🔍 Coverage: 91%
 The coverage report will be available at: `/target/coverage-reports/aggregate/index.html`
