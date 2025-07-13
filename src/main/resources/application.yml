@@ -1,0 +1,54 @@
+spring:  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/products_db
+    username: products_user
+    password: products_pass
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+      data-source-properties:
+        ssl: false
+        sslmode: disable
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    defer-datasource-initialization: true
+    show-sql: false
+    hibernate: 
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  sql:
+    init.mode: always
+    init.data-locations: classpath:data.sql
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/products_db
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: products-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      properties:
+        schema.registry.url: http://localhost:8081
+        specific.avro.reader: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        schema.registry.url: http://localhost:8081
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.products: DEBUG
+    org.springframework.data.mongodb: DEBUG 

@@ -1,6 +1,9 @@
 package com.products.integration.stepdefs;
 
+import com.products.domain.model.Product;
 import com.products.domain.model.ProductCategory;
+import com.products.domain.port.ProductKafkaPort;
+import com.products.infrastructure.mapper.ProductMapper;
 import com.products.infrastructure.postgresql.entity.ProductEntity;
 import com.products.infrastructure.postgresql.repository.ProductJpaRepository;
 import io.cucumber.datatable.DataTable;
@@ -17,6 +20,12 @@ public class CommonStepDefinitions {
     @Autowired
     private ProductJpaRepository productRepository;
 
+    @Autowired
+    private ProductKafkaPort productEventPort;
+
+    @Autowired
+    private ProductMapper productMapper;
+
     private Long firstProductId;
 
     @Given("the application is running with a clean database")
@@ -29,13 +38,15 @@ public class CommonStepDefinitions {
     public void theFollowingProductsExist(DataTable dataTable) {
         List<Map<String, String>> products = dataTable.asMaps();
         for (Map<String, String> productData : products) {
-            ProductEntity product = new ProductEntity();
-            product.setName(productData.get("name"));
-            product.setPrice(new BigDecimal(productData.get("price")));
-            product.setCategory(ProductCategory.valueOf(productData.get("category").toUpperCase()));
-            product.setActive(Boolean.parseBoolean(productData.get("active")));
+            ProductEntity productEntity = new ProductEntity();
+            productEntity.setName(productData.get("name"));
+            productEntity.setPrice(new BigDecimal(productData.get("price")));
+            productEntity.setCategory(ProductCategory.valueOf(productData.get("category").toUpperCase()));
+            productEntity.setActive(Boolean.parseBoolean(productData.get("active")));
 
-            productRepository.save(product);
+            ProductEntity productEntitySaved =  productRepository.save(productEntity);
+            Product product = productMapper.entityToDomain(productEntitySaved);
+            productEventPort.publishEvent(product);
         }
         productRepository.flush();
     }

@@ -6,7 +6,9 @@ import com.products.domain.model.PaginationQuery;
 import com.products.domain.model.Product;
 import com.products.domain.model.ProductCategory;
 import com.products.domain.model.ProductFilter;
-import com.products.domain.port.ProductPersistencePort;
+import com.products.domain.port.ProductKafkaPort;
+import com.products.domain.port.ProductMongoPort;
+import com.products.domain.port.ProductPostgresPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +32,13 @@ import org.junit.jupiter.api.DisplayName;
 class ProductServiceTest {
 
     @Mock
-    private ProductPersistencePort productRepository;
+    private ProductPostgresPort productPostgresPort;
+
+    @Mock
+    private ProductMongoPort productMongoPort;
+
+    @Mock
+    private ProductKafkaPort productEventPort;
 
     @InjectMocks
     private ProductService productService;
@@ -54,12 +62,12 @@ class ProductServiceTest {
                 BigDecimal.valueOf(49.99),
                 ProductCategory.BOOKS);
 
-        when(productRepository.save(productToSave)).thenReturn(sampleProduct);
+        when(productPostgresPort.save(productToSave)).thenReturn(sampleProduct);
 
         Product result = productService.createProduct(productToSave);
 
         assertThat(result).isEqualTo(sampleProduct);
-        verify(productRepository).save(productToSave);
+        verify(productPostgresPort).save(productToSave);
     }
 
     @Test
@@ -75,7 +83,7 @@ class ProductServiceTest {
         PaginatedResult<Product> expectedResult = new PaginatedResult<>(
                 products, "2", null, false, false, 2, 10);
 
-        when(productRepository.findActiveProducts(paginationQuery, filter))
+        when(productMongoPort.findActiveProducts(paginationQuery, filter))
                 .thenReturn(expectedResult);
 
         PaginatedResult<Product> result = productService.getAllActiveProducts(paginationQuery, filter);
@@ -83,7 +91,7 @@ class ProductServiceTest {
         assertThat(result.content()).hasSize(2);
         assertThat(result.size()).isEqualTo(2);
         assertThat(result.limit()).isEqualTo(10);
-        verify(productRepository).findActiveProducts(paginationQuery, filter);
+        verify(productMongoPort).findActiveProducts(paginationQuery, filter);
     }
 
     @Test
@@ -95,37 +103,37 @@ class ProductServiceTest {
         PaginatedResult<Product> expectedResult = new PaginatedResult<>(
                 Collections.emptyList(), null, null, false, false, 0, 10);
 
-        when(productRepository.findActiveProducts(paginationQuery, filter))
+        when(productMongoPort.findActiveProducts(paginationQuery, filter))
                 .thenReturn(expectedResult);
 
         PaginatedResult<Product> result = productService.getAllActiveProducts(paginationQuery, filter);
 
         assertThat(result.content()).isEmpty();
         assertThat(result.size()).isEqualTo(0);
-        verify(productRepository).findActiveProducts(paginationQuery, filter);
+        verify(productMongoPort).findActiveProducts(paginationQuery, filter);
     }
 
     @Test
     void getActiveProductById_ShouldReturnProduct_WhenProductExists() {
         Long productId = 1L;
-        when(productRepository.findActiveById(productId)).thenReturn(Optional.of(sampleProduct));
+        when(productMongoPort.findActiveById(productId)).thenReturn(Optional.of(sampleProduct));
 
         Product result = productService.getActiveProductById(productId);
 
         assertThat(result).isEqualTo(sampleProduct);
-        verify(productRepository).findActiveById(productId);
+        verify(productMongoPort).findActiveById(productId);
     }
 
     @Test
     void getActiveProductById_ShouldThrowException_WhenProductNotFound() {
         Long productId = 999L;
-        when(productRepository.findActiveById(productId)).thenReturn(Optional.empty());
+        when(productMongoPort.findActiveById(productId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.getActiveProductById(productId))
                 .isInstanceOf(ProductNotFoundException.class)
                 .hasMessage("Active product not found with id: " + productId);
 
-        verify(productRepository).findActiveById(productId);
+        verify(productMongoPort).findActiveById(productId);
     }
 
     @Test
@@ -150,14 +158,14 @@ class ProductServiceTest {
                 ProductCategory.BOOKS,
                 true);
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
-        when(productRepository.save(expectedUpdatedProduct)).thenReturn(expectedUpdatedProduct);
+        when(productMongoPort.findById(productId)).thenReturn(Optional.of(existingProduct));
+        when(productPostgresPort.save(expectedUpdatedProduct)).thenReturn(expectedUpdatedProduct);
 
         Product result = productService.updateProduct(productId, productUpdate);
 
         assertThat(result).isEqualTo(expectedUpdatedProduct);
-        verify(productRepository).findById(productId);
-        verify(productRepository).save(expectedUpdatedProduct);
+        verify(productMongoPort).findById(productId);
+        verify(productPostgresPort).save(expectedUpdatedProduct);
     }
 
     @Test
@@ -168,21 +176,25 @@ class ProductServiceTest {
                 BigDecimal.valueOf(75.00),
                 ProductCategory.BOOKS);
 
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+        when(productMongoPort.findById(productId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.updateProduct(productId, productUpdate))
                 .isInstanceOf(ProductNotFoundException.class)
                 .hasMessage("Product not found with id: " + productId);
 
-        verify(productRepository).findById(productId);
+        verify(productMongoPort).findById(productId);
     }
 
     @Test
     void deactivateProduct_ShouldCallRepository_WhenValidId() {
-        Long productId = 1L;
+        Product productUpdate = new Product(
+                1L,
+                "Updated Product",
+                BigDecimal.valueOf(79.99),
+                ProductCategory.BOOKS);
 
-        productService.deactivateProduct(productId);
+        productService.deactivateProduct(productUpdate);
 
-        verify(productRepository).deactivateProduct(productId);
+        verify(productPostgresPort).deactivateProduct(productUpdate.id());
     }
 }

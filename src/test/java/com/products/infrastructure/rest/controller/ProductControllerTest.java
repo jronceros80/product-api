@@ -86,9 +86,9 @@ class ProductControllerTest {
                                 ProductCategory.ELECTRONICS,
                                 true);
 
-                when(productMapper.toDomain(any(ProductRequestDTO.class))).thenReturn(domainProduct);
+                when(productMapper.requestDtoToDomain(any(ProductRequestDTO.class))).thenReturn(domainProduct);
                 when(productUseCase.createProduct(any(Product.class))).thenReturn(createdProduct);
-                when(productMapper.toResponseDTO(any(Product.class))).thenReturn(responseDTO);
+                when(productMapper.domainToResponseDTO(any(Product.class))).thenReturn(responseDTO);
 
                 mockMvc.perform(post("/api/v1/products")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -160,7 +160,7 @@ class ProductControllerTest {
                                 true);
 
                 when(productUseCase.getActiveProductById(productId)).thenReturn(product);
-                when(productMapper.toResponseDTO(product)).thenReturn(responseDTO);
+                when(productMapper.domainToResponseDTO(product)).thenReturn(responseDTO);
 
                 mockMvc.perform(get("/api/v1/products/{id}", productId))
                                 .andExpect(status().isOk())
@@ -180,9 +180,9 @@ class ProductControllerTest {
                 ProductResponseDTO responseDTO = new ProductResponseDTO(
                                 productId, "Updated Product", BigDecimal.valueOf(149.99), ProductCategory.BOOKS, true);
 
-                when(productMapper.toDomain(any(ProductRequestDTO.class))).thenReturn(domainProduct);
+                when(productMapper.requestDtoToDomain(any(ProductRequestDTO.class))).thenReturn(domainProduct);
                 when(productUseCase.updateProduct(any(Long.class), any(Product.class))).thenReturn(updatedProduct);
-                when(productMapper.toResponseDTO(any(Product.class))).thenReturn(responseDTO);
+                when(productMapper.domainToResponseDTO(any(Product.class))).thenReturn(responseDTO);
 
                 mockMvc.perform(put("/api/v1/products/{id}", productId)
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -195,11 +195,18 @@ class ProductControllerTest {
         @Test
         void deactivateProduct_ShouldReturnNoContent_WhenValidRequest() throws Exception {
                 Long productId = 1L;
-                doNothing().when(productUseCase).deactivateProduct(productId);
+                Product productDelete = new Product(
+                        productId,
+                        "Updated Product",
+                        BigDecimal.valueOf(79.99),
+                        ProductCategory.BOOKS);
+
+                when(productUseCase.getById(any(Long.class))).thenReturn(productDelete);
+                doNothing().when(productUseCase).deactivateProduct(productDelete);
 
                 mockMvc.perform(delete("/api/v1/products/{id}", productId))
                                 .andExpect(status().isNoContent());
 
-                verify(productUseCase).deactivateProduct(productId);
+                verify(productUseCase).deactivateProduct(productDelete);
         }
 }

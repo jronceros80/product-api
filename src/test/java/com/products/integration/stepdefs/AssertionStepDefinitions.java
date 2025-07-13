@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,7 +27,8 @@ public class AssertionStepDefinitions {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Then("the response status should be {int}")
-    public void theResponseStatusShouldBe(int expectedStatus) {
+    public void theResponseStatusShouldBe(int expectedStatus) throws InterruptedException {
+        TimeUnit.SECONDS.sleep(1);
         assertEquals(expectedStatus, httpSteps.getResponse().getStatusCode());
     }
 

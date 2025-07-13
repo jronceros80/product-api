@@ -33,9 +33,9 @@ public class ProductController implements ProductApi {
 
     @Override
     public ResponseEntity<ProductResponseDTO> createProduct(final ProductRequestDTO productRequestDTO) {
-        final Product productRequest = productMapper.toDomain(productRequestDTO);
+        final Product productRequest = productMapper.requestDtoToDomain(productRequestDTO);
         final Product createdProduct = productUseCase.createProduct(productRequest);
-        final ProductResponseDTO response = productMapper.toResponseDTO(createdProduct);
+        final ProductResponseDTO response = productMapper.domainToResponseDTO(createdProduct);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -57,7 +57,7 @@ public class ProductController implements ProductApi {
     @Override
     public ResponseEntity<ProductResponseDTO> getProductById(final Long id) {
         final Product product = productUseCase.getActiveProductById(id);
-        final ProductResponseDTO response = productMapper.toResponseDTO(product);
+        final ProductResponseDTO response = productMapper.domainToResponseDTO(product);
 
         return ResponseEntity.ok(response);
     }
@@ -65,16 +65,17 @@ public class ProductController implements ProductApi {
     @Override
     public ResponseEntity<ProductResponseDTO> updateProduct(
             final Long id, final ProductRequestDTO productRequestDTO) {
-        final Product productRequest = productMapper.toDomain(productRequestDTO);
+        final Product productRequest = productMapper.requestDtoToDomain(productRequestDTO);
         final Product updatedProduct = productUseCase.updateProduct(id, productRequest);
-        final ProductResponseDTO response = productMapper.toResponseDTO(updatedProduct);
+        final ProductResponseDTO response = productMapper.domainToResponseDTO(updatedProduct);
 
         return ResponseEntity.ok(response);
     }
 
     @Override
     public ResponseEntity<Void> deleteProduct(final Long id) {
-        productUseCase.deactivateProduct(id);
+        final Product product = productUseCase.getById(id);
+        productUseCase.deactivateProduct(product);
         return ResponseEntity.noContent().build();
     }
 

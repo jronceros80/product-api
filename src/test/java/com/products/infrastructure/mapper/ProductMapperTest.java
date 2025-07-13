@@ -27,14 +27,14 @@ class ProductMapperTest {
     }
 
     @Test
-    void toDomainModel_ShouldConvertRequestDTO_ToProduct() {
+    void toDomainModel_ShouldConvertRequestDTO_requestDtoToProduct() {
         ProductRequestDTO requestDTO = new ProductRequestDTO(
                 "Test Product",
                 BigDecimal.valueOf(99.99),
                 ProductCategory.ELECTRONICS,
                 true);
 
-        Product result = mapper.toDomain(requestDTO);
+        Product result = mapper.requestDtoToDomain(requestDTO);
 
         assertNotNull(result);
         assertNull(result.id());
@@ -45,12 +45,12 @@ class ProductMapperTest {
     }
 
     @Test
-    void toDomainModel_ShouldConvertEntity_ToProduct() {
+    void toDomainModel_ShouldConvertEntity_requestDtoToProduct() {
         ProductEntity entity = new ProductEntity("Test Product", BigDecimal.valueOf(99.99), ProductCategory.ELECTRONICS,
                 true);
         entity.setId(1L);
 
-        Product result = mapper.toDomain(entity);
+        Product result = mapper.entityToDomain(entity);
 
         assertNotNull(result);
         assertEquals(1L, result.id());
@@ -61,7 +61,7 @@ class ProductMapperTest {
     }
 
     @Test
-    void toResponseDTO_ShouldConvertProduct_ToResponseDTO() {
+    void toResponseDTO_ShouldConvertProduct_domainToResponseDTO() {
         Product product = new Product(
                 1L,
                 "Test Product",
@@ -69,7 +69,7 @@ class ProductMapperTest {
                 ProductCategory.ELECTRONICS,
                 true);
 
-        ProductResponseDTO result = mapper.toResponseDTO(product);
+        ProductResponseDTO result = mapper.domainToResponseDTO(product);
 
         assertNotNull(result);
         assertEquals(1L, result.id());
@@ -80,7 +80,7 @@ class ProductMapperTest {
     }
 
     @Test
-    void toEntity_ShouldConvertProduct_ToEntity() {
+    void toEntity_ShouldConvertProduct_domainToEntity() {
         Product product = new Product(
                 1L,
                 "Test Product",
@@ -88,7 +88,7 @@ class ProductMapperTest {
                 ProductCategory.ELECTRONICS,
                 true);
 
-        ProductEntity result = mapper.toEntity(product);
+        ProductEntity result = mapper.domainToEntity(product);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
@@ -99,14 +99,14 @@ class ProductMapperTest {
     }
 
     @Test
-    void toDomain_ShouldHandleInactiveProducts() {
+    void requestDtoToDomain_ShouldHandleInactiveProducts() {
         ProductRequestDTO requestDTO = new ProductRequestDTO(
                 "Inactive Product",
                 BigDecimal.valueOf(199.99),
                 ProductCategory.BOOKS,
                 false);
 
-        Product result = mapper.toDomain(requestDTO);
+        Product result = mapper.requestDtoToDomain(requestDTO);
 
         assertNotNull(result);
         assertNull(result.id());
@@ -117,14 +117,14 @@ class ProductMapperTest {
     }
 
     @Test
-    void toDomain_ShouldHandleNullActiveField() {
+    void requestDtoToDomain_ShouldHandleNullActiveField() {
         ProductRequestDTO requestDTO = new ProductRequestDTO(
                 "Product with null active",
                 BigDecimal.valueOf(299.99),
                 ProductCategory.CLOTHING,
                 null);
 
-        Product result = mapper.toDomain(requestDTO);
+        Product result = mapper.requestDtoToDomain(requestDTO);
 
         assertNotNull(result);
         assertNull(result.id());
@@ -143,9 +143,9 @@ class ProductMapperTest {
                 ProductCategory.CLOTHING,
                 true);
 
-        ProductResponseDTO responseDTO = mapper.toResponseDTO(originalProduct);
-        ProductEntity entity = mapper.toEntity(originalProduct);
-        Product reconvertedProduct = mapper.toDomain(entity);
+        ProductResponseDTO responseDTO = mapper.domainToResponseDTO(originalProduct);
+        ProductEntity entity = mapper.domainToEntity(originalProduct);
+        Product reconvertedProduct = mapper.entityToDomain(entity);
 
         assertEquals(originalProduct.id(), reconvertedProduct.id());
         assertEquals(originalProduct.name(), reconvertedProduct.name());

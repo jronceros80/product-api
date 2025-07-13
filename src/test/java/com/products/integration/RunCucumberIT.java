@@ -1,6 +1,6 @@
 package com.products.integration;
 
-import com.products.ProductsApplication;
+import com.products.ProductApplication;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.junit.platform.suite.api.ConfigurationParameter;
 import org.junit.platform.suite.api.IncludeEngines;
@@ -21,7 +21,7 @@ import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
 @ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.products.integration")
 @CucumberContextConfiguration
 @SpringBootTest(
-    classes = ProductsApplication.class,
+    classes = ProductApplication.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 @ActiveProfiles("test")
