@@ -6,7 +6,9 @@ import com.products.domain.model.PaginationQuery;
 import com.products.domain.model.Product;
 import com.products.domain.model.ProductCategory;
 import com.products.domain.model.ProductFilter;
-import com.products.domain.port.ProductPersistencePort;
+import com.products.domain.port.ProductMongoPort;
+import com.products.domain.port.ProductPostgresPort;
+import com.products.domain.port.ProductKafkaPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,160 +31,175 @@ import org.junit.jupiter.api.DisplayName;
 @ExtendWith(MockitoExtension.class)
 class ProductServiceTest {
 
-    @Mock
-    private ProductPersistencePort productRepository;
+        @Mock
+        private ProductPostgresPort productPostgresPort;
 
-    @InjectMocks
-    private ProductService productService;
+        @Mock
+        private ProductMongoPort productMongoPort;
 
-    private Product sampleProduct;
+        @Mock
+        private ProductKafkaPort productKafkaPort;
 
-    @BeforeEach
-    void setUp() {
-        sampleProduct = new Product(
-                1L,
-                "Test Product",
-                BigDecimal.valueOf(99.99),
-                ProductCategory.ELECTRONICS,
-                true);
-    }
+        @InjectMocks
+        private ProductService productService;
 
-    @Test
-    void createProduct_ShouldReturnSavedProduct_WhenValidProduct() {
-        Product productToSave = new Product(
-                "New Product",
-                BigDecimal.valueOf(49.99),
-                ProductCategory.BOOKS);
+        private Product sampleProduct;
 
-        when(productRepository.save(productToSave)).thenReturn(sampleProduct);
+        @BeforeEach
+        void setUp() {
+                sampleProduct = new Product(
+                                1L,
+                                "Test Product",
+                                BigDecimal.valueOf(99.99),
+                                ProductCategory.ELECTRONICS,
+                                true);
+        }
 
-        Product result = productService.createProduct(productToSave);
+        @Test
+        void createProduct_ShouldReturnSavedProduct_WhenValidProduct() {
+                Product productToSave = new Product(
+                                "New Product",
+                                BigDecimal.valueOf(49.99),
+                                ProductCategory.BOOKS);
 
-        assertThat(result).isEqualTo(sampleProduct);
-        verify(productRepository).save(productToSave);
-    }
+                when(productPostgresPort.save(productToSave)).thenReturn(sampleProduct);
 
-    @Test
-    @DisplayName("Should return paginated active products when valid pagination query and filter are provided")
-    void getAllActiveProducts_ValidPaginationAndFilter_ReturnsPaginatedProducts() {
-        PaginationQuery paginationQuery = new PaginationQuery(null, 10, "id", "asc");
-        ProductFilter filter = new ProductFilter("ELECTRONICS", "laptop", true);
+                Product result = productService.createProduct(productToSave);
 
-        List<Product> products = Arrays.asList(
-                new Product(1L, "Laptop", BigDecimal.valueOf(1000), ProductCategory.ELECTRONICS, true),
-                new Product(2L, "Mouse", BigDecimal.valueOf(25), ProductCategory.ELECTRONICS, true));
+                assertThat(result).isEqualTo(sampleProduct);
+                verify(productPostgresPort).save(productToSave);
+                verify(productKafkaPort).publishEvent(sampleProduct);
+        }
 
-        PaginatedResult<Product> expectedResult = new PaginatedResult<>(
-                products, "2", null, false, false, 2, 10);
+        @Test
+        @DisplayName("Should return paginated active products when valid pagination query and filter are provided")
+        void getAllActiveProducts_ValidPaginationAndFilter_ReturnsPaginatedProducts() {
+                PaginationQuery paginationQuery = new PaginationQuery(null, 10, "id", "asc");
+                ProductFilter filter = new ProductFilter("ELECTRONICS", "laptop", true);
 
-        when(productRepository.findActiveProducts(paginationQuery, filter))
-                .thenReturn(expectedResult);
+                List<Product> products = Arrays.asList(
+                                new Product(1L, "Laptop", BigDecimal.valueOf(1000), ProductCategory.ELECTRONICS, true),
+                                new Product(2L, "Mouse", BigDecimal.valueOf(25), ProductCategory.ELECTRONICS, true));
 
-        PaginatedResult<Product> result = productService.getAllActiveProducts(paginationQuery, filter);
+                PaginatedResult<Product> expectedResult = new PaginatedResult<>(
+                                products, "2", null, false, false, 2, 10);
 
-        assertThat(result.content()).hasSize(2);
-        assertThat(result.size()).isEqualTo(2);
-        assertThat(result.limit()).isEqualTo(10);
-        verify(productRepository).findActiveProducts(paginationQuery, filter);
-    }
+                when(productMongoPort.findActiveProducts(paginationQuery, filter))
+                                .thenReturn(expectedResult);
 
-    @Test
-    @DisplayName("Should return empty list when no products match the criteria")
-    void getAllActiveProducts_NoMatchingProducts_ReturnsEmptyList() {
-        PaginationQuery paginationQuery = new PaginationQuery(null, 10, "id", "asc");
-        ProductFilter filter = new ProductFilter("CLOTHING", "jacket", true);
+                PaginatedResult<Product> result = productService.getAllActiveProducts(paginationQuery, filter);
 
-        PaginatedResult<Product> expectedResult = new PaginatedResult<>(
-                Collections.emptyList(), null, null, false, false, 0, 10);
+                assertThat(result.content()).hasSize(2);
+                assertThat(result.size()).isEqualTo(2);
+                assertThat(result.limit()).isEqualTo(10);
+                verify(productMongoPort).findActiveProducts(paginationQuery, filter);
+        }
 
-        when(productRepository.findActiveProducts(paginationQuery, filter))
-                .thenReturn(expectedResult);
+        @Test
+        @DisplayName("Should return empty list when no products match the criteria")
+        void getAllActiveProducts_NoMatchingProducts_ReturnsEmptyList() {
+                PaginationQuery paginationQuery = new PaginationQuery(null, 10, "id", "asc");
+                ProductFilter filter = new ProductFilter("CLOTHING", "jacket", true);
 
-        PaginatedResult<Product> result = productService.getAllActiveProducts(paginationQuery, filter);
+                PaginatedResult<Product> expectedResult = new PaginatedResult<>(
+                                Collections.emptyList(), null, null, false, false, 0, 10);
 
-        assertThat(result.content()).isEmpty();
-        assertThat(result.size()).isEqualTo(0);
-        verify(productRepository).findActiveProducts(paginationQuery, filter);
-    }
+                when(productMongoPort.findActiveProducts(paginationQuery, filter))
+                                .thenReturn(expectedResult);
 
-    @Test
-    void getActiveProductById_ShouldReturnProduct_WhenProductExists() {
-        Long productId = 1L;
-        when(productRepository.findActiveById(productId)).thenReturn(Optional.of(sampleProduct));
+                PaginatedResult<Product> result = productService.getAllActiveProducts(paginationQuery, filter);
 
-        Product result = productService.getActiveProductById(productId);
+                assertThat(result.content()).isEmpty();
+                assertThat(result.size()).isEqualTo(0);
+                verify(productMongoPort).findActiveProducts(paginationQuery, filter);
+        }
 
-        assertThat(result).isEqualTo(sampleProduct);
-        verify(productRepository).findActiveById(productId);
-    }
+        @Test
+        void getActiveProductById_ShouldReturnProduct_WhenProductExists() {
+                Long productId = 1L;
+                when(productMongoPort.findActiveById(productId)).thenReturn(Optional.of(sampleProduct));
 
-    @Test
-    void getActiveProductById_ShouldThrowException_WhenProductNotFound() {
-        Long productId = 999L;
-        when(productRepository.findActiveById(productId)).thenReturn(Optional.empty());
+                Product result = productService.getActiveProductById(productId);
 
-        assertThatThrownBy(() -> productService.getActiveProductById(productId))
-                .isInstanceOf(ProductNotFoundException.class)
-                .hasMessage("Active product not found with id: " + productId);
+                assertThat(result).isEqualTo(sampleProduct);
+                verify(productMongoPort).findActiveById(productId);
+        }
 
-        verify(productRepository).findActiveById(productId);
-    }
+        @Test
+        void getActiveProductById_ShouldThrowException_WhenProductNotFound() {
+                Long productId = 999L;
+                when(productMongoPort.findActiveById(productId)).thenReturn(Optional.empty());
 
-    @Test
-    void updateProduct_ShouldReturnUpdatedProduct_WhenProductExists() {
-        Long productId = 1L;
-        Product existingProduct = new Product(
-                productId,
-                "Existing Product",
-                BigDecimal.valueOf(50.00),
-                ProductCategory.ELECTRONICS,
-                true);
+                assertThatThrownBy(() -> productService.getActiveProductById(productId))
+                                .isInstanceOf(ProductNotFoundException.class)
+                                .hasMessage("Active product not found with id: " + productId);
 
-        Product productUpdate = new Product(
-                "Updated Product",
-                BigDecimal.valueOf(75.00),
-                ProductCategory.BOOKS);
+                verify(productMongoPort).findActiveById(productId);
+        }
 
-        Product expectedUpdatedProduct = new Product(
-                productId,
-                "Updated Product",
-                BigDecimal.valueOf(75.00),
-                ProductCategory.BOOKS,
-                true);
+        @Test
+        void updateProduct_ShouldReturnUpdatedProduct_WhenProductExists() {
+                Long productId = 1L;
+                Product existingProduct = new Product(
+                                productId,
+                                "Existing Product",
+                                BigDecimal.valueOf(50.00),
+                                ProductCategory.ELECTRONICS,
+                                true);
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(existingProduct));
-        when(productRepository.save(expectedUpdatedProduct)).thenReturn(expectedUpdatedProduct);
+                Product productUpdate = new Product(
+                                "Updated Product",
+                                BigDecimal.valueOf(75.00),
+                                ProductCategory.BOOKS);
 
-        Product result = productService.updateProduct(productId, productUpdate);
+                Product expectedUpdatedProduct = new Product(
+                                productId,
+                                "Updated Product",
+                                BigDecimal.valueOf(75.00),
+                                ProductCategory.BOOKS,
+                                true);
 
-        assertThat(result).isEqualTo(expectedUpdatedProduct);
-        verify(productRepository).findById(productId);
-        verify(productRepository).save(expectedUpdatedProduct);
-    }
+                when(productMongoPort.findById(productId)).thenReturn(Optional.of(existingProduct));
+                when(productPostgresPort.save(expectedUpdatedProduct)).thenReturn(expectedUpdatedProduct);
 
-    @Test
-    void updateProduct_ShouldThrowException_WhenProductNotFound() {
-        Long productId = 999L;
-        Product productUpdate = new Product(
-                "Updated Product",
-                BigDecimal.valueOf(75.00),
-                ProductCategory.BOOKS);
+                Product result = productService.updateProduct(productId, productUpdate);
 
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+                assertThat(result).isEqualTo(expectedUpdatedProduct);
+                verify(productMongoPort).findById(productId);
+                verify(productPostgresPort).save(expectedUpdatedProduct);
+                verify(productKafkaPort).publishEvent(expectedUpdatedProduct);
+        }
 
-        assertThatThrownBy(() -> productService.updateProduct(productId, productUpdate))
-                .isInstanceOf(ProductNotFoundException.class)
-                .hasMessage("Product not found with id: " + productId);
+        @Test
+        void updateProduct_ShouldThrowException_WhenProductNotFound() {
+                Long productId = 999L;
+                Product productUpdate = new Product(
+                                "Updated Product",
+                                BigDecimal.valueOf(75.00),
+                                ProductCategory.BOOKS);
 
-        verify(productRepository).findById(productId);
-    }
+                when(productMongoPort.findById(productId)).thenReturn(Optional.empty());
 
-    @Test
-    void deactivateProduct_ShouldCallRepository_WhenValidId() {
-        Long productId = 1L;
+                assertThatThrownBy(() -> productService.updateProduct(productId, productUpdate))
+                                .isInstanceOf(ProductNotFoundException.class)
+                                .hasMessage("Product not found with id: " + productId);
 
-        productService.deactivateProduct(productId);
+                verify(productMongoPort).findById(productId);
+        }
 
-        verify(productRepository).deactivateProduct(productId);
-    }
+        @Test
+        void deactivateProduct_ShouldCallRepository_WhenValidId() {
+                Long productId = 1L;
+                Product existingProduct = new Product(
+                                productId,
+                                "Existing Product",
+                                BigDecimal.valueOf(50.00),
+                                ProductCategory.ELECTRONICS,
+                                true);
+
+                productService.deactivateProduct(existingProduct);
+
+                verify(productPostgresPort).deactivateProduct(productId);
+                verify(productKafkaPort).publishEvent(existingProduct);
+        }
 }

@@ -19,20 +19,24 @@ public class ProductUseCase {
     }
 
     public PaginatedResult<Product> getAllActiveProducts(final PaginationQuery paginationQuery,
-                                                         final ProductFilter filter) {
+            final ProductFilter filter) {
 
-    return productService.getAllActiveProducts(paginationQuery, filter);
-}
+        return productService.getAllActiveProducts(paginationQuery, filter);
+    }
 
     public Product getActiveProductById(final Long id) {
         return productService.getActiveProductById(id);
+    }
+
+    public Product getById(final Long id) {
+        return productService.getById(id);
     }
 
     public Product updateProduct(final Long id, final Product productRequest) {
         return productService.updateProduct(id, productRequest);
     }
 
-    public void deactivateProduct(final Long id) {
-        productService.deactivateProduct(id);
+    public void deactivateProduct(final Product product) {
+        productService.deactivateProduct(product);
     }
 }

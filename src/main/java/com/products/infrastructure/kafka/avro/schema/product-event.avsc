@@ -1,0 +1,32 @@
+{
+  "type": "record",
+  "name": "ProductEvent",
+  "namespace": "com.products.infrastructure.kafka.avro.generated",  
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"      
+    },
+    {
+      "name": "name",
+      "type": "string"      
+    },
+    {
+      "name": "price",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 10,
+        "scale": 2
+      }      
+    },
+    {
+      "name": "category",
+      "type": "string"      
+    },
+    {
+      "name": "active",
+      "type": "boolean"      
+    }
+  ]
+} 

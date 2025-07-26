@@ -136,10 +136,14 @@ class ProductUseCaseTest {
 
     @Test
     void deactivateProduct_ShouldCallService_WhenValidId() {
-        Long productId = 1L;
+        Product productUpdate = new Product(
+                1L,
+                "Updated Product",
+                BigDecimal.valueOf(79.99),
+                ProductCategory.BOOKS);
 
-        productUseCase.deactivateProduct(productId);
+        productUseCase.deactivateProduct(productUpdate);
 
-        verify(productService).deactivateProduct(productId);
+        verify(productService).deactivateProduct(productUpdate);
     }
 }

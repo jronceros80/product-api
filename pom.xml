@@ -24,6 +24,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>21</java.version>
+
+    <avro.version>1.11.3</avro.version>
+    <confluent.version>7.4.0</confluent.version>
     
     <!-- JaCoCo Properties -->
     <jacoco.version>0.8.12</jacoco.version>
@@ -56,14 +59,42 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
+      <artifactId>spring-boot-starter-data-mongodb</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>    
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka</artifactId>
+    </dependency>
+
+    <!-- Avro Dependencies for Kafka serialization -->
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
+      <version>${avro.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>io.confluent</groupId>
+      <artifactId>kafka-avro-serializer</artifactId>
+      <version>${confluent.version}</version>
+    </dependency> 
 
     <!-- Database -->
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    
+    <!-- H2 Database for Tests -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <!-- OpenAPI Documentation -->
@@ -84,6 +115,12 @@
           <artifactId>junit</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka-test</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <!-- JUnit 5 -->
@@ -295,10 +332,7 @@
           <argLine>${surefireArgLine}</argLine>
           <skipTests>${skip.unit.tests}</skipTests>
           <testFailureIgnore>true</testFailureIgnore>
-          <excludes>
-            <exclude>**/IT*.java</exclude>
-            <exclude>**/*IT.java</exclude>
-            <exclude>**/*IntegrationTest.java</exclude>
+          <excludes>           
             <exclude>**/RunCucumberIT.java</exclude>
           </excludes>
         </configuration>
@@ -319,12 +353,31 @@
             <configuration>
               <argLine>${failsafeArgLine}</argLine>
               <skipTests>${skip.integration.tests}</skipTests>
-              <includes>
-                <include>**/IT*.java</include>
-                <include>**/*IT.java</include>
-                <include>**/*IntegrationTest.java</include>
+              <includes>               
                 <include>**/RunCucumberIT.java</include>
               </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Avro Maven Plugin -->
+      <plugin>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-maven-plugin</artifactId>
+        <version>${avro.version}</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>schema</goal>
+            </goals>
+            <configuration>
+              <sourceDirectory>${project.basedir}/src/main/java/com/products/infrastructure/kafka/avro/schema</sourceDirectory>
+              <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
+              <stringType>String</stringType>
+              <createSetters>false</createSetters>
+              <enableDecimalLogicalType>true</enableDecimalLogicalType>
             </configuration>
           </execution>
         </executions>
@@ -409,4 +462,12 @@
       </properties>
     </profile>
   </profiles>
+  
+  <!-- Repositories -->
+  <repositories>
+    <repository>
+      <id>confluent</id>
+      <url>https://packages.confluent.io/maven/</url>
+    </repository>
+  </repositories>
 </project>
