@@ -9,12 +9,13 @@ import com.products.infrastructure.mapper.ProductMapper;
 import com.products.infrastructure.mongo.document.ProductDocument;
 import com.products.infrastructure.mongo.repository.ProductRepository;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.stereotype.Component;
 
 @Component
 public class ProductMongoAdapter implements ProductMongoPort {
@@ -49,7 +50,7 @@ public class ProductMongoAdapter implements ProductMongoPort {
 
     @Override
     public PaginatedResult<Product> findActiveProducts(final PaginationQuery paginationQuery,
-                                                       final ProductFilter filter) {
+            final ProductFilter filter) {
 
         final Long cursor = parseCursor(paginationQuery.cursor());
         final int limit = paginationQuery.limit();
@@ -100,4 +101,5 @@ public class ProductMongoAdapter implements ProductMongoPort {
             return null;
         }
     }
+
 }

@@ -42,6 +42,15 @@ class ProductMongoAdapterTest {
         testProduct = new Product(1L, "Test Product", new BigDecimal("99.99"), ProductCategory.ELECTRONICS, true);
     }
 
+    @Test
+    void save_ShouldSaveProduct() {
+        when(mapper.domainToDocument(testProduct)).thenReturn(testDocument);
+
+        adapter.save(testProduct);
+
+        verify(mapper).domainToDocument(testProduct);
+        verify(repository).save(testDocument);
+    }
 
     @Test
     void findById_ShouldReturnProduct_WhenExists() {
@@ -137,7 +146,8 @@ class ProductMongoAdapterTest {
         PaginationQuery paginationQuery = new PaginationQuery("5", 10, "id", "asc");
         ProductFilter filter = new ProductFilter(null, null, true);
 
-        ProductDocument document = createProductDocument(6L, "Product", BigDecimal.valueOf(100), ProductCategory.ELECTRONICS);
+        ProductDocument document = createProductDocument(6L, "Product", BigDecimal.valueOf(100),
+                ProductCategory.ELECTRONICS);
         when(repository.findProductsAfterCursor(5L, true, null, null, 11))
                 .thenReturn(List.of(document));
 

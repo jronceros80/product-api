@@ -3,6 +3,7 @@ package com.products.integration.stepdefs;
 import com.products.domain.model.Product;
 import com.products.domain.model.ProductCategory;
 import com.products.domain.port.ProductKafkaPort;
+import com.products.domain.port.ProductMongoPort;
 import com.products.infrastructure.mapper.ProductMapper;
 import com.products.infrastructure.postgresql.entity.ProductEntity;
 import com.products.infrastructure.postgresql.repository.ProductJpaRepository;
@@ -14,6 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 public class CommonStepDefinitions {
 
@@ -24,6 +30,9 @@ public class CommonStepDefinitions {
     private ProductKafkaPort productEventPort;
 
     @Autowired
+    private ProductMongoPort productMongoPort;
+
+    @Autowired
     private ProductMapper productMapper;
 
     private Long firstProductId;
@@ -31,6 +40,14 @@ public class CommonStepDefinitions {
     @Given("the application is running with a clean database")
     public void theApplicationIsRunningWithACleanDatabase() {
         productRepository.deleteAll();
+        // Configure mocks to work with simplified setup
+        configureMockBehavior();
+    }
+
+    private void configureMockBehavior() {
+        // Configure basic mocks for Kafka and MongoDB
+        doNothing().when(productEventPort).publishEvent(any(Product.class));
+        doNothing().when(productMongoPort).save(any(Product.class));
     }
 
     @Given("the following products exist:")
@@ -44,9 +61,14 @@ public class CommonStepDefinitions {
             productEntity.setCategory(ProductCategory.valueOf(productData.get("category").toUpperCase()));
             productEntity.setActive(Boolean.parseBoolean(productData.get("active")));
 
-            ProductEntity productEntitySaved =  productRepository.save(productEntity);
+            ProductEntity productEntitySaved = productRepository.save(productEntity);
             Product product = productMapper.entityToDomain(productEntitySaved);
+            
+            // Publish event to Kafka (mock)
             productEventPort.publishEvent(product);
+            
+            // Simulate saving to MongoDB (mock behavior)
+            productMongoPort.save(product);
         }
         productRepository.flush();
     }
@@ -57,6 +79,12 @@ public class CommonStepDefinitions {
         List<ProductEntity> existingProducts = productRepository.findAll();
         if (!existingProducts.isEmpty()) {
             firstProductId = existingProducts.getFirst().getId();
+            // Configure simple mocks for GET operations
+            Product firstProduct = productMapper.entityToDomain(existingProducts.get(0));
+            when(productMongoPort.findActiveById(firstProductId))
+                .thenReturn(Optional.of(firstProduct));
+            when(productMongoPort.findById(firstProductId))
+                .thenReturn(Optional.of(firstProduct));
         }
     }
 

@@ -1,6 +1,5 @@
 package com.products.infrastructure.kafka.consumer;
 
-import com.products.domain.port.ProductMongoPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -11,6 +10,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import com.products.domain.model.Product;
+import com.products.domain.port.ProductMongoPort;
 import com.products.infrastructure.kafka.avro.generated.ProductEvent;
 import com.products.infrastructure.mapper.ProductMapper;
 
@@ -19,12 +19,12 @@ public class ProductConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(ProductConsumer.class);
 
-    private final ProductMongoPort productMongoPort;
+    private final ProductMongoPort productPersistenceMongoPort;
 
     private final ProductMapper productMapper;
 
-    public ProductConsumer(ProductMongoPort productMongoPort, ProductMapper productMapper) {
-        this.productMongoPort = productMongoPort;
+    public ProductConsumer(ProductMongoPort productPersistenceMongoPort, ProductMapper productMapper) {
+        this.productPersistenceMongoPort = productPersistenceMongoPort;
         this.productMapper = productMapper;
     }
 
@@ -43,7 +43,7 @@ public class ProductConsumer {
 
             final Product product = productMapper.avroToDomain(avroMessage);
 
-            productMongoPort.save(product);
+            productPersistenceMongoPort.save(product);
 
             log.info("Successfully processed and saved product with ID: {}", product);
 

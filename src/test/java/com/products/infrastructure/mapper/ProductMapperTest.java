@@ -5,6 +5,8 @@ import com.products.domain.model.ProductCategory;
 import com.products.infrastructure.dto.ProductRequestDTO;
 import com.products.infrastructure.dto.ProductResponseDTO;
 import com.products.infrastructure.postgresql.entity.ProductEntity;
+import com.products.infrastructure.kafka.avro.generated.ProductEvent;
+import com.products.infrastructure.mongo.document.ProductDocument;
 
 import com.products.domain.model.PaginationQuery;
 
@@ -223,5 +225,104 @@ class ProductMapperTest {
         assertThat(result.limit()).isEqualTo(20);
         assertThat(result.sortBy()).isEqualTo("price");
         assertThat(result.sortDir()).isEqualTo("asc");
+    }
+
+    @Test
+    void domainToAvro_ShouldConvertProductToAvro() {
+        Product product = new Product(
+                1L,
+                "Test Product",
+                BigDecimal.valueOf(99.99),
+                ProductCategory.ELECTRONICS,
+                true);
+
+        ProductEvent result = mapper.domainToAvro(product);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Test Product", result.getName());
+        assertEquals(BigDecimal.valueOf(99.99), result.getPrice());
+        assertEquals("ELECTRONICS", result.getCategory());
+        assertTrue(result.getActive());
+    }
+
+    @Test
+    void avroToDomain_ShouldConvertAvroToProduct() {
+        ProductEvent avroEvent = ProductEvent.newBuilder()
+                .setId(1L)
+                .setName("Test Product")
+                .setPrice(BigDecimal.valueOf(99.99))
+                .setCategory("ELECTRONICS")
+                .setActive(true)
+                .build();
+
+        Product result = mapper.avroToDomain(avroEvent);
+
+        assertNotNull(result);
+        assertEquals(1L, result.id());
+        assertEquals("Test Product", result.name());
+        assertEquals(BigDecimal.valueOf(99.99), result.price());
+        assertEquals(ProductCategory.ELECTRONICS, result.category());
+        assertTrue(result.active());
+    }
+
+    @Test
+    void domainToDocument_ShouldConvertProductToDocument() {
+        Product product = new Product(
+                1L,
+                "Test Product",
+                BigDecimal.valueOf(99.99),
+                ProductCategory.ELECTRONICS,
+                true);
+
+        ProductDocument result = mapper.domainToDocument(product);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals("Test Product", result.getName());
+        assertEquals(BigDecimal.valueOf(99.99), result.getPrice());
+        assertEquals("ELECTRONICS", result.getCategory());
+        assertTrue(result.getActive());
+    }
+
+    @Test
+    void documentToDomain_ShouldConvertDocumentToProduct() {
+        ProductDocument document = new ProductDocument(
+                1L,
+                "Test Product",
+                BigDecimal.valueOf(99.99),
+                "ELECTRONICS",
+                true);
+
+        Product result = mapper.documentToDomain(document);
+
+        assertNotNull(result);
+        assertEquals(1L, result.id());
+        assertEquals("Test Product", result.name());
+        assertEquals(BigDecimal.valueOf(99.99), result.price());
+        assertEquals(ProductCategory.ELECTRONICS, result.category());
+        assertTrue(result.active());
+    }
+
+    @Test
+    void avroToDomainToDcoument_RoundTripConversion_ShouldPreserveData() {
+        ProductEvent originalEvent = ProductEvent.newBuilder()
+                .setId(1L)
+                .setName("Round Trip Product")
+                .setPrice(BigDecimal.valueOf(599.99))
+                .setCategory("CLOTHING")
+                .setActive(true)
+                .build();
+
+        Product product = mapper.avroToDomain(originalEvent);
+        ProductDocument document = mapper.domainToDocument(product);
+        Product reconvertedProduct = mapper.documentToDomain(document);
+        ProductEvent reconvertedEvent = mapper.domainToAvro(reconvertedProduct);
+
+        assertEquals(originalEvent.getId(), reconvertedEvent.getId());
+        assertEquals(originalEvent.getName(), reconvertedEvent.getName());
+        assertEquals(originalEvent.getPrice(), reconvertedEvent.getPrice());
+        assertEquals(originalEvent.getCategory(), reconvertedEvent.getCategory());
+        assertEquals(originalEvent.getActive(), reconvertedEvent.getActive());
     }
 }

@@ -13,10 +13,11 @@ public class ProductConfig {
 
     @Bean
     public ProductService productService(
-            final ProductPostgresPort productPostgresPort,
-            final ProductMongoPort productMongoPort,
-            final ProductKafkaPort productKafkaPort) {
-        return new ProductService(productPostgresPort, productMongoPort, productKafkaPort);
+            final ProductPostgresPort productPersistencePostgresPort,
+            final ProductMongoPort productPersistenceMongoPort,
+            final ProductKafkaPort productEventPort) {
+        return new ProductService(
+                productPersistencePostgresPort, productPersistenceMongoPort, productEventPort);
     }
 
     @Bean
